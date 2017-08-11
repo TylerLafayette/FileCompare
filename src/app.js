@@ -44,39 +44,47 @@ const getDirectories = function (src, callback) {
 
 // Register ipc events
 ipcMain.on('run-directory-scan', function(event, arg) {
-  // fs.readdir(arg, (err, files) => {
-  //   event.sender.send('directory-scan', files)
-  // })
-  // traverseDirectory(arg, (err, result) => {
-  getDirectories(arg, (err, result) => {
-    let hashes = []
-    result.forEach( file => {
-      const contents = fs.readFileSync(file, 'utf8')
-      const algorithm = 'sha1'
-      , shasum = crypto.createHash(algorithm)
-      shasum.update(contents)
-      hashes.push({
+  // When we receive a request to start scanning the directory
+  getDirectories(arg, (err, result) => { // Run glob and get all files
+    let hashes = [] // Make an array for storing all SHA-1 hashes
+    result.forEach( file => { // Iterate through all files
+      const contents = fs.readFileSync(file, 'utf8') // Read the file
+      const algorithm = 'sha1' // Set our crypto algorithm to SHA-1
+      , shasum = crypto.createHash(algorithm) // Create a crypto instance with our algorithm
+      shasum.update(contents) // Hash our file's contents
+      hashes.push({ // Add the hash to the array
         path: file,
         hash: shasum.digest('hex')
       })
     })
-    var conflicts = []
-    hashes.forEach(item => {
-      hashes.forEach(compare => {
-        if(item.hash == compare.hash) {
-          if(item.path == compare.path) {}else {
-            conflicts.push({
+    let progress = 0 // Make a variable for the progress to send to the client
+    let incAmount = 100 / Math.pow(result.length, 2) // Find the amount to increment every time
+    let conflicts = [] // Make an array for file matches
+    hashes.forEach(item => { // Iterate through all our files' hashes
+      // item = our first item to compare
+      hashes.forEach(compare => { // Iterate through all hashes again, to try to match them to the first item.
+        if(item.hash == compare.hash) { // See if the hashes match
+          if(item.path == compare.path) {}else { // Make sure they aren't the same file
+            conflicts.push({ // We found a conflict! Let's add it to the array
               item,
               compare
             })
           }
         }
+        progress += incAmount; // Incremenet the progress bar
+        win.send('progress-update', progress) // Update the client with the progress
       })
     })
-    // console.log(isDuplicate);
-    event.sender.send('directory-scan', conflicts)
+    conflicts.forEach(item => { // Iterate through all conflicts
+      conflicts.forEach((compare, i) => { // Iterate through all conflicts again
+        if(item.item == compare.compare) // Check if they have opposite equal values
+          conflicts.splice(i, 1) // Remove that item from the array
+        else if(item.compare == compare.item) // Same as above, reversed
+          conflicts.splice(i, 1) // Remove that item from the array
+      })
+    })
+    event.sender.send('directory-scan', conflicts) // Send the finished array to the client
   })
-  // })
 })
 
 // This method will be called when Electron has finished

@@ -1,5 +1,6 @@
 import React, { Component } from "react"
 import { ipcRenderer } from "electron"
+import history from "../router/history.js"
 
 export default class Home extends Component {
 	constructor() {
@@ -33,7 +34,6 @@ export default class Home extends Component {
 			items = dt.files;
 		}
 		var thing = items[0].path
-		ipcRenderer.send('run-directory-scan', thing)
 
 		if(items.length > 1) 
 			return this.setState({error: true, message: "Only drop in one folder, please!"})
@@ -41,11 +41,16 @@ export default class Home extends Component {
 		if(!items[0].type == "")
 			return this.setState({error: true, message: "Please drop in a folder!"})
 		
+		ipcRenderer.send('run-directory-scan', thing) // Send the message to the server
+		history.push('/job') // Redirect to the job page
 	}
 	componentDidMount() {
-		ipcRenderer.on('directory-scan', function(event, arg) {
-			console.log(arg); // prints "pong"
-		});
+		ipcRenderer.on('directory-scan', (e, arg) => {
+			console.log(arg);
+		})
+		ipcRenderer.on('progress-update', (e, progress) => {
+			console.log("Progress report: " , progress)
+		})
 	}
 	render() {
 		if(this.state.error) {
