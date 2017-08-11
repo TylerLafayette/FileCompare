@@ -1,0 +1,101 @@
+body {
+	background: #fff;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	font-family: "Raleway";
+}
+
+.home--wrapper {
+	@keyframes pop-in {
+		0% {
+			transform: perspective(500px) rotateX(30deg) scale(0.9);
+			opacity: 0;
+		}
+		100% {
+			transform: perspective(500px) rotateX(0deg) scale(1);
+			opacity: 1;
+		}
+	}
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	.border--container {
+		pointer-events: none;
+		box-sizing: border-box;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		top: 0;
+		left: 0;
+		padding: 10px;
+		.border--drag {
+			width: 100%;
+			height: 100%;
+			border-radius: 10px;
+			pointer-events: none;
+			box-sizing: border-box;
+			border: 3px dotted black;
+			transform: scaleX(0.9) scaleY(0.9);
+			opacity: 0;
+			transition: 0.2s cubic-bezier(1, 1.64, 0, 1.56);
+			&.show {
+				filter: blur(0px);
+				opacity: 1;
+				transform: scaleX(1) scaleY(1);
+			}
+		}
+	}
+	.center--container {
+		cursor: default;
+		-webkit-user-select: none;
+		.main--text {
+			color: #000;
+			font-size: 56px;
+			font-style: italic;
+			margin: 0;
+			animation: pop-in 0.3s cubic-bezier(1, 1.93, 0.11, 1.33);
+			animation-delay: 0s;
+		}
+		.secondary--text {
+			margin-top: 10px;
+			text-align: center;
+			display: block;
+			transform: perspective(500px) rotateX(30deg) scale(0.9);
+			opacity: 0;
+			animation: pop-in 0.3s cubic-bezier(1, 1.93, 0.11, 1.33);
+			animation-fill-mode: forwards;
+			animation-delay: 0.1s;
+			&.anim--done {
+				transform: perspective(500px) rotateX(0deg) scale(1);
+				opacity: 1;
+			}
+			&.shake {
+				animation: shake 0.2s linear;
+				transform: perspective(500px) rotateX(0deg) scale(1);
+				opacity: 1;
+				@keyframes shake {
+					0% {
+						transform: translateX(0px);
+					}
+					25% {
+						transform: translateX(5px);
+					}
+					50% {
+						transform: translateX(0px);
+					}
+					75% {
+						transform: translateX(-5px);
+					}
+					100% {
+						transform: translateX(0px);											
+					}
+				}
+			}
+		}
+	}
+}
