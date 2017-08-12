@@ -42,15 +42,9 @@ export default class Home extends Component {
 			return this.setState({error: true, message: "Please drop in a folder!"})
 		
 		ipcRenderer.send('run-directory-scan', thing) // Send the message to the server
-		history.push('/job') // Redirect to the job page
+		history.push('job') // Redirect to the job page
 	}
 	componentDidMount() {
-		ipcRenderer.on('directory-scan', (e, arg) => {
-			console.log(arg);
-		})
-		ipcRenderer.on('progress-update', (e, progress) => {
-			console.log("Progress report: " , progress)
-		})
 	}
 	render() {
 		if(this.state.error) {

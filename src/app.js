@@ -19,11 +19,7 @@ function createWindow () {
   })
 
   // and load the index.html of the app.
-  win.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
-    protocol: 'file:',
-    slashes: true
-  }))
+  win.loadURL(`file://${__dirname}/index.html`)
 
 
   // Open the DevTools.
@@ -47,6 +43,8 @@ ipcMain.on('run-directory-scan', function(event, arg) {
   // When we receive a request to start scanning the directory
   getDirectories(arg, (err, result) => { // Run glob and get all files
     let hashes = [] // Make an array for storing all SHA-1 hashes
+    let delay = false
+    let interval
     result.forEach( file => { // Iterate through all files
       const contents = fs.readFileSync(file, 'utf8') // Read the file
       const algorithm = 'sha1' // Set our crypto algorithm to SHA-1

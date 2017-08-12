@@ -53,6 +53,10 @@ body {
 	.center--container {
 		cursor: default;
 		-webkit-user-select: none;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		flex-direction: column;
 		.main--text {
 			color: #000;
 			font-size: 56px;
@@ -95,6 +99,20 @@ body {
 						transform: translateX(0px);											
 					}
 				}
+			}
+		}
+		.progress--bar-outer {
+			margin-bottom: 30px;
+			width: 75%;
+			height: 5px;
+			border-radius: 3px;
+			overflow: hidden;
+			display: block;
+			background: #eee;
+			.progress--bar-inner {
+				height: 5px;
+				background: black;
+				transition: 0.1s ease;
 			}
 		}
 	}
