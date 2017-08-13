@@ -1,10 +1,9 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs')
 const glob = require('glob')
 const crypto = require('crypto')
-const ipcMain = require('electron').ipcMain
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -42,46 +41,52 @@ const getDirectories = function (src, callback) {
 ipcMain.on('run-directory-scan', function(event, arg) {
   // When we receive a request to start scanning the directory
   getDirectories(arg, (err, result) => { // Run glob and get all files
+    let progress = 0 // Make a variable for the progress to send to the client
+    let incAmount = 100 / (Math.pow(result.length, 2) + result.length) // Find the amount to increment every time
     let hashes = [] // Make an array for storing all SHA-1 hashes
     let delay = false
     let interval
+    let iterations = 0
     result.forEach( file => { // Iterate through all files
-      const contents = fs.readFileSync(file, 'utf8') // Read the file
-      const algorithm = 'sha1' // Set our crypto algorithm to SHA-1
-      , shasum = crypto.createHash(algorithm) // Create a crypto instance with our algorithm
-      shasum.update(contents) // Hash our file's contents
-      hashes.push({ // Add the hash to the array
-        path: file,
-        hash: shasum.digest('hex')
-      })
-    })
-    let progress = 0 // Make a variable for the progress to send to the client
-    let incAmount = 100 / Math.pow(result.length, 2) // Find the amount to increment every time
-    let conflicts = [] // Make an array for file matches
-    hashes.forEach(item => { // Iterate through all our files' hashes
-      // item = our first item to compare
-      hashes.forEach(compare => { // Iterate through all hashes again, to try to match them to the first item.
-        if(item.hash == compare.hash) { // See if the hashes match
-          if(item.path == compare.path) {}else { // Make sure they aren't the same file
-            conflicts.push({ // We found a conflict! Let's add it to the array
-              item,
-              compare
-            })
-          }
-        }
+      fs.readFile(file, 'utf8', (err, contents) => {
+        const algorithm = 'sha1' // Set our crypto algorithm to SHA-1
+        , shasum = crypto.createHash(algorithm) // Create a crypto instance with our algorithm
+        shasum.update(contents) // Hash our file's contents
+        hashes.push({ // Add the hash to the array
+          path: file, // File path
+          hash: shasum.digest('hex') // Find the hex hash of the file
+        })
         progress += incAmount; // Incremenet the progress bar
         win.send('progress-update', progress) // Update the client with the progress
+        if(++iterations == result.length) {
+          let conflicts = [] // Make an array for file matches
+          hashes.forEach(item => { // Iterate through all our files' hashes
+            // item = our first item to compare
+            hashes.forEach(compare => { // Iterate through all hashes again, to try to match them to the first item.
+              if(item.hash == compare.hash) { // See if the hashes match
+                if(item.path == compare.path) {}else { // Make sure they aren't the same file
+                  conflicts.push({ // We found a conflict! Let's add it to the array
+                    item,
+                    compare
+                  })
+                }
+              }
+              progress += incAmount; // Incremenet the progress bar
+              win.send('progress-update', progress) // Update the client with the progress
+            })
+          })
+          conflicts.forEach(item => { // Iterate through all conflicts
+            conflicts.forEach((compare, i) => { // Iterate through all conflicts again
+              if(item.item == compare.compare) // Check if they have opposite equal values
+                conflicts.splice(i, 1) // Remove that item from the array
+              else if(item.compare == compare.item) // Same as above, reversed
+                conflicts.splice(i, 1) // Remove that item from the array
+            })
+          })
+          event.sender.send('directory-scan', conflicts) // Send the finished array to the client
+        }
       })
     })
-    conflicts.forEach(item => { // Iterate through all conflicts
-      conflicts.forEach((compare, i) => { // Iterate through all conflicts again
-        if(item.item == compare.compare) // Check if they have opposite equal values
-          conflicts.splice(i, 1) // Remove that item from the array
-        else if(item.compare == compare.item) // Same as above, reversed
-          conflicts.splice(i, 1) // Remove that item from the array
-      })
-    })
-    event.sender.send('directory-scan', conflicts) // Send the finished array to the client
   })
 })
 
@@ -94,17 +99,15 @@ app.on('ready', createWindow)
 app.on('window-all-closed', () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
+  if (process.platform !== 'darwin')
     app.quit()
-  }
 })
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (win === null) {
+  if (win === null)
     createWindow()
-  }
 })
 
 // In this file you can include the rest of your app's specific main process

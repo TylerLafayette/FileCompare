@@ -37,12 +37,12 @@ export default class Home extends Component {
 
 		if(items.length > 1) 
 			return this.setState({error: true, message: "Only drop in one folder, please!"})
-
-		if(!items[0].type == "")
+		else if(!items[0].type == "")
 			return this.setState({error: true, message: "Please drop in a folder!"})
-		
-		ipcRenderer.send('run-directory-scan', thing) // Send the message to the server
-		history.push('job') // Redirect to the job page
+		else {
+			window.localStorage.setItem('current-job-path', thing)
+			history.push('job')
+		}
 	}
 	componentDidMount() {
 	}

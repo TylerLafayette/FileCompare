@@ -109,8 +109,24 @@ body {
 			overflow: hidden;
 			display: block;
 			background: #eee;
+			position: relative;
 			.progress--bar-inner {
 				height: 5px;
+				width: 10%;
+				position: absolute;
+				top: 0;
+				left: 0;
+				animation: spin 1s ease infinite;
+				@keyframes spin {
+					0% {
+						left: -50%;
+						width: 50%;
+					}
+					100% {
+						width: 5%;
+						left: 100%;
+					}
+				}
 				background: black;
 				transition: 0.1s ease;
 			}
